@@ -9,7 +9,7 @@
 #
 Name     : SDL3
 Version  : 3.2.10
-Release  : 1
+Release  : 2
 URL      : https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-3.2.10.tar.gz
 Source0  : https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-3.2.10.tar.gz
 Source1  : https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-3.2.10.tar.gz.sig
@@ -48,13 +48,19 @@ BuildRequires : libXt-dev
 BuildRequires : libXtst-dev
 BuildRequires : libXv-dev
 BuildRequires : libXxf86vm-dev
+BuildRequires : liburing-dev
+BuildRequires : libxkbcommon-dev
 BuildRequires : mesa-dev
 BuildRequires : openjdk
 BuildRequires : perl
+BuildRequires : pipewire-dev
 BuildRequires : pkg-config
 BuildRequires : pkgconfig(libudev)
 BuildRequires : pkgconfig(libusb-1.0)
 BuildRequires : python3-dev
+BuildRequires : systemd-dev
+BuildRequires : wayland-dev
+BuildRequires : wayland-protocols-dev
 # Suppress stripping binaries
 %define __strip /bin/true
 %define debug_package %{nil}
@@ -110,13 +116,19 @@ gpg --homedir .gnupg --status-fd 1 --verify %{SOURCE1} %{SOURCE0} > gpg.status
 grep -E '^\[GNUPG:\] (GOODSIG|EXPKEYSIG) 30A59377A7763BE6' gpg.status
 %setup -q -n SDL3-3.2.10
 cd %{_builddir}/SDL3-3.2.10
+pushd ..
+cp -a SDL3-3.2.10 buildavx2
+popd
+pushd ..
+cp -a SDL3-3.2.10 buildapx
+popd
 
 %build
 export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1743458765
+export SOURCE_DATE_EPOCH=1743459489
 mkdir -p clr-build
 pushd clr-build
 export GCC_IGNORE_WERROR=1
@@ -137,6 +149,58 @@ export GOAMD64=v2
 %cmake ..   -G 'Unix Makefiles'
 make  %{?_smp_mflags}
 popd
+pushd ../buildavx2/
+mkdir -p clr-build-avx2
+pushd clr-build-avx2
+export GCC_IGNORE_WERROR=1
+export AR=gcc-ar
+export RANLIB=gcc-ranlib
+export NM=gcc-nm
+CLEAR_INTERMEDIATE_CFLAGS="$CLEAR_INTERMEDIATE_CFLAGS -O3 -fdebug-types-section -femit-struct-debug-baseonly -ffat-lto-objects -flto=auto -g1 -gno-column-info -gno-variable-location-views -gz=zstd "
+CLEAR_INTERMEDIATE_FCFLAGS="$CLEAR_INTERMEDIATE_FFLAGS -O3 -fdebug-types-section -femit-struct-debug-baseonly -ffat-lto-objects -flto=auto -g1 -gno-column-info -gno-variable-location-views -gz=zstd "
+CLEAR_INTERMEDIATE_FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS -O3 -fdebug-types-section -femit-struct-debug-baseonly -ffat-lto-objects -flto=auto -g1 -gno-column-info -gno-variable-location-views -gz=zstd "
+CLEAR_INTERMEDIATE_CXXFLAGS="$CLEAR_INTERMEDIATE_CXXFLAGS -O3 -fdebug-types-section -femit-struct-debug-baseonly -ffat-lto-objects -flto=auto -g1 -gno-column-info -gno-variable-location-views -gz=zstd "
+CFLAGS="$CLEAR_INTERMEDIATE_CFLAGS"
+CXXFLAGS="$CLEAR_INTERMEDIATE_CXXFLAGS"
+FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS"
+FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS"
+ASFLAGS="$CLEAR_INTERMEDIATE_ASFLAGS"
+LDFLAGS="$CLEAR_INTERMEDIATE_LDFLAGS"
+GOAMD64=v3
+CFLAGS="$CLEAR_INTERMEDIATE_CFLAGS -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+CXXFLAGS="$CLEAR_INTERMEDIATE_CXXFLAGS -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS -march=x86-64-v3 "
+%cmake ..   -G 'Unix Makefiles'
+make  %{?_smp_mflags}
+popd
+popd
+pushd ../buildapx/
+mkdir -p clr-build-apx
+pushd clr-build-apx
+export GCC_IGNORE_WERROR=1
+export AR=gcc-ar
+export RANLIB=gcc-ranlib
+export NM=gcc-nm
+CLEAR_INTERMEDIATE_CFLAGS="$CLEAR_INTERMEDIATE_CFLAGS -O3 -fdebug-types-section -femit-struct-debug-baseonly -ffat-lto-objects -flto=auto -g1 -gno-column-info -gno-variable-location-views -gz=zstd "
+CLEAR_INTERMEDIATE_FCFLAGS="$CLEAR_INTERMEDIATE_FFLAGS -O3 -fdebug-types-section -femit-struct-debug-baseonly -ffat-lto-objects -flto=auto -g1 -gno-column-info -gno-variable-location-views -gz=zstd "
+CLEAR_INTERMEDIATE_FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS -O3 -fdebug-types-section -femit-struct-debug-baseonly -ffat-lto-objects -flto=auto -g1 -gno-column-info -gno-variable-location-views -gz=zstd "
+CLEAR_INTERMEDIATE_CXXFLAGS="$CLEAR_INTERMEDIATE_CXXFLAGS -O3 -fdebug-types-section -femit-struct-debug-baseonly -ffat-lto-objects -flto=auto -g1 -gno-column-info -gno-variable-location-views -gz=zstd "
+CFLAGS="$CLEAR_INTERMEDIATE_CFLAGS"
+CXXFLAGS="$CLEAR_INTERMEDIATE_CXXFLAGS"
+FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS"
+FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS"
+ASFLAGS="$CLEAR_INTERMEDIATE_ASFLAGS"
+LDFLAGS="$CLEAR_INTERMEDIATE_LDFLAGS"
+GOAMD64=v3
+CFLAGS="$CLEAR_INTERMEDIATE_CFLAGS -march=x86-64-v3 -mapxf -Wl,-z,x86-64-v3 "
+CXXFLAGS="$CLEAR_INTERMEDIATE_CXXFLAGS -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS -march=x86-64-v3 -mapxf -Wl,-z,x86-64-v3 "
+FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS -march=x86-64-v3 -mapxf "
+%cmake ..   -G 'Unix Makefiles'
+make  %{?_smp_mflags}
+popd
+popd
 
 %install
 export GCC_IGNORE_WERROR=1
@@ -153,7 +217,7 @@ FFLAGS="$CLEAR_INTERMEDIATE_FFLAGS"
 FCFLAGS="$CLEAR_INTERMEDIATE_FCFLAGS"
 ASFLAGS="$CLEAR_INTERMEDIATE_ASFLAGS"
 LDFLAGS="$CLEAR_INTERMEDIATE_LDFLAGS"
-export SOURCE_DATE_EPOCH=1743458765
+export SOURCE_DATE_EPOCH=1743459489
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/package-licenses/SDL3
 cp %{_builddir}/SDL3-%{version}/src/hidapi/LICENSE-bsd.txt %{buildroot}/usr/share/package-licenses/SDL3/7dde42b4c6fdafae722d8d07556b6d9dba4d2963 || :
@@ -162,10 +226,24 @@ cp %{_builddir}/SDL3-%{version}/src/hidapi/LICENSE-orig.txt %{buildroot}/usr/sha
 cp %{_builddir}/SDL3-%{version}/src/video/yuv2rgb/LICENSE %{buildroot}/usr/share/package-licenses/SDL3/763a61ff74960ead36b9ef5f5db65d083d7466c1 || :
 cp %{_builddir}/SDL3-%{version}/test/unifont-15.1.05-license.txt %{buildroot}/usr/share/package-licenses/SDL3/ee06847a47ae566e1f69859ef1b1621189c0e03c || :
 export GOAMD64=v2
+pushd ../buildavx2/
+GOAMD64=v3
+pushd clr-build-avx2
+%make_install_v3  || :
+popd
+popd
+pushd ../buildapx/
+GOAMD64=v3
+pushd clr-build-apx
+%make_install_va  || :
+popd
+popd
 GOAMD64=v2
 pushd clr-build
 %make_install
 popd
+/usr/bin/elf-move.py avx2 %{buildroot}-v3 %{buildroot} %{buildroot}/usr/share/clear/filemap/filemap-%{name}
+/usr/bin/elf-move.py apx %{buildroot}-va %{buildroot} %{buildroot}/usr/share/clear/filemap/filemap-%{name}
 
 %files
 %defattr(-,root,root,-)
@@ -273,6 +351,8 @@ popd
 
 %files lib
 %defattr(-,root,root,-)
+/V3/usr/lib64/libSDL3.so.0.2.10
+/VA/usr/lib64/libSDL3.so.0.2.10
 /usr/lib64/libSDL3.so.0
 /usr/lib64/libSDL3.so.0.2.10
 
